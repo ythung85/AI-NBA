@@ -3,7 +3,7 @@
 Input format:
 python3 agent.py -Laker -Warrior
 
-Provide a input name for each team:
+*Provide a input name for each team:*
 \table
 
 Problem 1.
