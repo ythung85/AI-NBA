@@ -6,6 +6,9 @@ python3 agent.py -Laker -Warrior
 *Provide a input name for each team:*
 \table
 
+*Two variable in need:
+RPM and Possession time
+
 Problem 1.
 Fix the Abbreviation of team name
 
