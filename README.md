@@ -10,4 +10,8 @@ Problem 1.
 Fix the Abbreviation of team name
 
 Problem 2.
-I
+Filter out the player doesn't show up too much. ( Depend on the domain knowledge )
+
+
+
+
