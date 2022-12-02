@@ -20,6 +20,9 @@ class State():
     possession_of_ball = "Neither" # or "Away" or "Home"
     home_timeouts_left = 6 # is this correct for nba? i think
     away_timeouts_left = 6
+    subs_allowed = True
+    home_pos_count = 0
+    away_pos_count = 0
 
 def consider_timeout(team, state):
     probability_of_calling_timeout = 0.50 # we can totally arbitrarily redefine this, so that it makes sense such that teams don't...
@@ -31,81 +34,88 @@ def consider_timeout(team, state):
                         # away team has momentum
                         u = np.random.uniform()
                         if u > probability_of_calling_timeout:
-				state.home_players_on['Curr_Shift'] = 0
-				state.away_players_on['Curr_Shift'] = 0
-                        	return True
+                            state.home_players_on['Curr_Shift'] = 0
+                            state.away_players_on['Curr_Shift'] = 0
+                            state.home_timeouts_left -= 1
+                            return True
     elif team == "Away":
         if state.away_timeouts_left > 0:
             if state.momentum > 5:
               # home team has momentum
                 u = np.random.uniform()
                 if u > probability_of_calling_timeout:
-			state.home_players_on['Curr_Shift'] = 0
-			state.away_players_on['Curr_Shift'] = 0
-			return True
+                    state.home_players_on['Curr_Shift'] = 0
+                    state.away_players_on['Curr_Shift'] = 0
+                    state.away_timeouts_left -= 1
+                    return True
     return False
 
-def donothing():
+def donothing(state):
+    state.subs_allowed = False
     return 'donothing'
     # literally do nothing
+
 def simulate_points(state):
-      # account for who has ball, FAPM of both teams, time in game, strategies, momentum
-    
-    ##
-    ##
-    
+    # account for who has ball, FAPM of both teams, time in game, strategies, momentum
     home_fapm = sum(state.home_team[state.home_team.NAME.isin(state.home_players_on.NAME)]['FAPM'])
     away_fapm = sum(state.away_team[state.away_team.NAME.isin(state.away_players_on.NAME)]['FAPM'])
-    home_fapm = sign(home_fapm)*sqrt(abs(home_fapm))
-    away_fapm = sign(away_fapm)*sqrt(abs(away_fapm))
-
-    '''
-    
-    try to find you the best setting for value of "u > 0.50 + home_fapm - away_fapm"
-    
-    '''
+    home_fapm = np.sign(home_fapm)*np.sqrt(abs(home_fapm))
+    away_fapm = np.sign(away_fapm)*np.sqrt(abs(away_fapm))
     if(state.possession_of_ball == "Home"):
+        state.home_pos_count +=1
         u = np.random.uniform()
         #print('Home team Turns')
-        if(u >  0.14 - (home_fapm - home_fapm)/home_fapm):
-          # 0 points - turnover
+        if(u <  0.50 - (home_fapm - away_fapm)/100):
+            # 0 points - turnover
             #print('donothing')
-            donothing()
+            donothing(state)
         else:
             #print('try to shoot the ball')
             u = np.random.uniform()
-            if(u < (0.47/0.86)):
+            if(u < (0.29/0.50)):
                 state.home_score += 2
                 #print('2 points get.')
-            elif((0.47/0.86) < u < (0.47/0.86)+(0.59/0.86)):
+            elif((0.29/0.50) < u < (0.29/0.50)+(0.12/0.50)):
                 state.home_score += 3
                 #print('3 points get.')
             else:
-                state.home_score += 1
-                #print('1 points get.')
-        #print('--------------------------------------------------------')
+                # free throw case
+                u2 = np.random.uniform()
+                if(u2 < 0.25*0.25):
+                    donothing(state)
+                elif(0.25*0.25 < u2 < 0.75*0.75):
+                    state.home_score += 1
+                else:
+                    state.home_score += 2
+
         state.possession_of_ball = "Away"
         
     elif(state.possession_of_ball == "Away"):
         u = np.random.uniform()
+        state.away_pos_count += 1
         #print('Away team Turns')
-        if(u > 0.14 -(away_fapm - home_fapm)/away_fapm):
+        if(u < 0.50 - (away_fapm - home_fapm)/100):
             # 0 points - turnover
             #print('donothing')
-            donothing()
+            donothing(state)
         else:
-            u = np.random.uniform()
             #print('try to shoot the ball')
-            if(u < (0.47/0.86)):
+            u = np.random.uniform()
+            if(u < (0.29/0.50)):
                 state.away_score += 2
                 #print('2 points get.')
-            elif((0.47/0.86) < u < (0.47/0.86)+(0.59/0.86)):
+            elif((0.29/0.50) < u < (0.29/0.50)+(0.12/0.50)):
                 state.away_score += 3
                 #print('3 points get.')
             else:
-                state.away_score += 1
-                #print('1 points get.')
-        #print('--------------------------------------------------------')
+                # free throw case
+                u2 = np.random.uniform()
+                if(u2 < 0.25*0.25):
+                    donothing(state)
+                elif(0.25*0.25 < u2 < 0.75*0.75):
+                    state.away_score += 1
+                else:
+                    state.away_score += 2
         state.possession_of_ball = "Home"
         
 def substitution(team, state):
@@ -122,7 +132,8 @@ def substitution(team, state):
             
             if len(poc-cp) != 0:
                 for i in range(len(poc-cp)):
-                    print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i] + " at " + state.time_in_qtr + " in quarter " + qtr)
+                    temp = 0
+                    #print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i] + " at " + str(state.time_in_qtr) + " in quarter " + str(state.quarter))
 
 
     elif team == "Away":
@@ -138,22 +149,22 @@ def substitution(team, state):
             
             if len(poc-cp) != 0:
                 for i in range(len(poc-cp)):
-                    print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i] + " at " + state.time_in_qtr + " in quarter " + qtr)
+                    temp = 0
+                    #print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i] + " at " + str(state.time_in_qtr) + " in quarter " + str(state.quarter))
             
 def simulate_time(state, home_avg, away_avg):
+    sd = 3/60
     if(state.possession_of_ball == "Home"):
-        u = np.random.exponential(1/home_avg)[0]
+        u = np.random.normal(home_avg/60,sd)[0]
     elif(state.possession_of_ball == "Away"):
-        u = np.random.exponential(1/away_avg)[0]
+        u = np.random.normal(away_avg/60,sd)[0]
+    print("current possession time = ", str(u))
         # for all players on court, update minutes played
-    #state.home_players_on['Minutes in Game'] = 0
-    #state.away_players_on['Minutes in Game'] = 0
     if(state.time_in_qtr - u < 0):
-	state.home_players_on['Minutes in Game'] = state.home_players_on['Minutes in Game'].add(state.time_in_qtr) # for every row in the column
-    	state.away_players_on['Minutes in Game'] = state.away_players_on['Minutes in Game'].add(state.time_in_qtr) # for every row in the column
-	# quarter is over - so a timeout occurs - all players current shift set to 0
-	state.home_players_on['Curr_Shift'] = 0
-    	state.away_players_on['Curr_Shift'] = 0
+        state.home_players_on['Minutes in Game'] = state.home_players_on['Minutes in Game'].add(state.time_in_qtr) # for every row in the column
+        state.away_players_on['Minutes in Game'] = state.away_players_on['Minutes in Game'].add(state.time_in_qtr) # for every row in the column
+        state.home_players_on['Curr_Shift'] = 0 # quarter is over - so a timeout occurs - all players current shift set to 0
+        state.away_players_on['Curr_Shift'] = 0
         state.quarter += 1
         state.time_in_qtr = 12.00
         if(state.first_poss == "Home"):
@@ -169,24 +180,27 @@ def simulate_time(state, home_avg, away_avg):
         return False # false means do not simulate points
     else:
         state.time_in_qtr -= u
-	state.home_players_on['Minutes in Game'] = state.home_players_on['Minutes in Game'].add(u) # for every row in the column
-    	state.away_players_on['Minutes in Game'] = state.away_players_on['Minutes in Game'].add(u) # for every row in the column
-	state.home_players_on['Curr_Shift'] = state.home_players_on['Curr_Shift'].add(u) # for every row in the column
-    	state.away_players_on['Curr_Shift'] = state.away_players_on['Curr_Shift'].add(u) # for every row in the column
+        state.home_players_on['Minutes in Game'] = state.home_players_on['Minutes in Game'].add(u) # for every row in the column
+        state.away_players_on['Minutes in Game'] = state.away_players_on['Minutes in Game'].add(u) # for every row in the column
+        state.home_players_on['Curr_Shift'] = state.home_players_on['Curr_Shift'].add(u) # for every row in the column
+        state.away_players_on['Curr_Shift'] = state.away_players_on['Curr_Shift'].add(u) # for every row in the column
+        if(u > 24/60):
+            donothing(state)
+            return False
         return True  
     
 def update_time(state):
-    state.home_team.loc[state.home_team.NAME.isin(state.home_players_on.NAME), 'Minutes in Game'] += state.home_players_on['Minutes in Game']
-    state.away_team.loc[state.away_team.NAME.isin(state.away_players_on.NAME), 'Minutes in Game'] += state.away_players_on['Minutes in Game']
+    state.home_team.loc[state.home_team.NAME.isin(state.home_players_on.NAME), 'Minutes in Game'] = state.home_players_on['Minutes in Game']
+    state.away_team.loc[state.away_team.NAME.isin(state.away_players_on.NAME), 'Minutes in Game'] = state.away_players_on['Minutes in Game']
     
 def update_fapm(state):
     
     #discuss
-    state.home_team.loc[state.home_team.NAME.isin(state.home_players_on.NAME), 'FAPM'] -= (state.home_players_on['Minutes in Game']+state.home_players_on['Curr_Shift'])
-    state.away_team.loc[state.away_team.NAME.isin(state.away_players_on.NAME), 'FAPM'] -= (state.away_players_on['Minutes in Game']+state.away_players_on['Curr_Shift'])
+    state.home_team.loc[state.home_team.NAME.isin(state.home_players_on.NAME), 'FAPM'] = state.home_players_on['RPM']-(state.home_players_on['Minutes in Game']/2.5+state.home_players_on['Curr_Shift'])
+    state.away_team.loc[state.away_team.NAME.isin(state.away_players_on.NAME), 'FAPM'] = state.away_players_on['RPM']-(state.away_players_on['Minutes in Game']/2.5+state.away_players_on['Curr_Shift'])
     
-    state.home_team.loc[~state.home_team.NAME.isin(state.home_players_on.NAME), 'FAPM'] += 0
-    state.away_team.loc[~state.away_team.NAME.isin(state.away_players_on.NAME), 'FAPM'] += 0
+    #state.home_team.loc[~state.home_team.NAME.isin(state.home_players_on.NAME), 'FAPM'] += 0
+    #state.away_team.loc[~state.away_team.NAME.isin(state.away_players_on.NAME), 'FAPM'] += 0
 
 
 parser = argparse.ArgumentParser(description='AINBA')
@@ -247,13 +261,18 @@ def main():
     count = state.quarter
     
     while(state.quarter < 5):
-        
-        consider_timeout("Home", state)
-        consider_timeout("Away", state)
-        substitution("Home", state)
-        substitution("Away", state)
-        #consider_strategy("Home", state)
-        #consider_strategy("Away", state)
+        if(state.subs_allowed):
+            consider_timeout("Home", state)
+            consider_timeout("Away", state)
+            substitution("Home", state)
+            substitution("Away", state)
+            #consider_strategy("Home", state)
+            #consider_strategy("Away", state)
+        else:
+            state.subs_allowed = True
+            # if we were not allowed to sub on this loop iteration, then we wont let the agent consider it
+            # however we will set subs_allowed back to true, so that we can do it on next iteration, UNLESS
+            # if they miss the basket then it will be set to false again
         
         try_score = simulate_time(state, home_tm_poss_secs, away_tm_poss_secs)
 
@@ -267,6 +286,7 @@ def main():
             print('--------------------------------------------------')
             print('Quarter ' + str(count) + ' end')
             print(home_tm,': ', state.home_score, ' | ', away_tm,': ', state.away_score)
+            print('home poss count: ', state.home_pos_count, ' away poss count: ', state.away_pos_count)
             count = state.quarter
     print('*******************************************')
     print(nba.home_team,'players statistics:')
