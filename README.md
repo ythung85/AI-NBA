@@ -2,7 +2,7 @@
 
 Input format:
 ```
-python3 ckn.py -ATL -BOS
+python3 ckn.py --home_team ATL --away_team BOS
 ```
 
 *Provide a input name for each team:*
