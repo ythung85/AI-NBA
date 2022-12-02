@@ -3,7 +3,6 @@ import pandas as pd
 import sys
 import argparse
 
-
 class State():
     quarter = 1
     
@@ -14,7 +13,6 @@ class State():
     away_players_on = [] 
     home_strategy = "Normal"
     away_strategy = "Normal"
-    first_poss = ''
     home_score = 0
     away_score = 0
     momentum = 0 # lets say positive means home has scored last, negative means away scored last
@@ -107,18 +105,34 @@ def simulate_points(state):
 def substitution(team, state):
     if team == "Home":
         tmp = state.home_players_on
-        state.home_players_on = state.home_team.sort_values(by=['FAPM'], ascending=False).iloc[0:5]
-        if len(set(tmp) - set(state.home_players_on)) > 0 and len(set(state.home_players_on) - set(tmp)):
-            print(', '.join(set(tmp) - set(state.home_players_on)) + " is substituted by " + ', '.join(set(state.home_players_on) - set(tmp)))
-    
+        if len(tmp) == 0:
+            print('starting five: ')
+            state.home_players_on = state.home_team.sort_values(by=['FAPM'], ascending=False).iloc[0:5]
+            print(list(state.home_players_on.NAME))
+        else:
+            state.home_players_on = state.home_team.sort_values(by=['FAPM'], ascending=False).iloc[0:5]
+            poc = set(tmp.NAME)
+            cp = set(state.home_players_on.NAME)
+            
+            if len(poc-cp) != 0:
+                for i in range(len(poc-cp)):
+                    print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i])
+
 
     elif team == "Away":
         tmp = state.away_players_on
-        state.away_players_on = state.away_team.sort_values(by=['FAPM'], ascending=False).iloc[0:5]
-        if len(set(tmp) - set(state.away_players_on)) > 0 and len(set(state.away_players_on) - set(tmp)):
-            print(', '.join(set(tmp) - set(state.away_players_on)) + " is substituted by " + ', '.join(set(state.away_players_on) - set(tmp)))
+        if len(tmp) == 0:
+            print('starting five: ')
+            state.away_players_on = state.away_team.sort_values(by=['FAPM'], ascending=False).iloc[0:5]
+            print(list(state.away_players_on.NAME))
+        else:
+            state.away_players_on = state.away_team.sort_values(by=['FAPM'], ascending=False).iloc[0:5]
+            poc = set(tmp.NAME)
+            cp = set(state.away_players_on.NAME)
             
-            
+            if len(poc-cp) != 0:
+                for i in range(len(poc-cp)):
+                    print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i])
             
 def simulate_time(state, home_avg, away_avg):
     if(state.possession_of_ball == "Home"):
@@ -188,6 +202,7 @@ def main():
     state.home_team = []
     state.home_team.append(home)
     state.home_team = pd.DataFrame.from_dict(state.home_team[0], orient='columns')
+    state.home_team.reset_index(drop = True, inplace = True)
 
     away_tm = nba.away_team
     temp = all_players[all_players['TEAM'] == away_tm].sort_values(by=['MPG'], ascending=False)[0:10]
@@ -201,6 +216,7 @@ def main():
     state.away_team = []
     state.away_team.append(away)
     state.away_team = pd.DataFrame.from_dict(state.away_team[0], orient='columns')
+    state.away_team.reset_index(drop = True, inplace = True)
 
     poss_times = pd.read_csv("NBA_Poss.csv")
     home_tm_poss_secs = poss_times[poss_times['TEAM'] == home_tm]['SPP']
