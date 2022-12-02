@@ -118,7 +118,7 @@ def substitution(team, state):
             
             if len(poc-cp) != 0:
                 for i in range(len(poc-cp)):
-                    print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i])
+                    print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i] + " at " + state.time_in_qtr + " in quarter " + qtr)
 
 
     elif team == "Away":
@@ -134,7 +134,7 @@ def substitution(team, state):
             
             if len(poc-cp) != 0:
                 for i in range(len(poc-cp)):
-                    print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i])
+                    print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i] + " at " + state.time_in_qtr + " in quarter " + qtr)
             
 def simulate_time(state, home_avg, away_avg):
     if(state.possession_of_ball == "Home"):
@@ -142,11 +142,14 @@ def simulate_time(state, home_avg, away_avg):
     elif(state.possession_of_ball == "Away"):
         u = np.random.exponential(1/away_avg)[0]
         # for all players on court, update minutes played
-    state.home_players_on['Minutes in Game'] = 0
-    state.away_players_on['Minutes in Game'] = 0
+    #state.home_players_on['Minutes in Game'] = 0
+    #state.away_players_on['Minutes in Game'] = 0
     if(state.time_in_qtr - u < 0):
 	state.home_players_on['Minutes in Game'] = state.home_players_on['Minutes in Game'].add(state.time_in_qtr) # for every row in the column
     	state.away_players_on['Minutes in Game'] = state.away_players_on['Minutes in Game'].add(state.time_in_qtr) # for every row in the column
+	# quarter is over - so a timeout occurs - all players current shift set to 0
+	state.home_players_on['Curr_Shift'] = 0
+    	state.away_players_on['Curr_Shift'] = 0
         state.quarter += 1
         state.time_in_qtr = 12.00
         if(state.first_poss == "Home"):
@@ -164,6 +167,8 @@ def simulate_time(state, home_avg, away_avg):
         state.time_in_qtr -= u
 	state.home_players_on['Minutes in Game'] = state.home_players_on['Minutes in Game'].add(u) # for every row in the column
     	state.away_players_on['Minutes in Game'] = state.away_players_on['Minutes in Game'].add(u) # for every row in the column
+	state.home_players_on['Curr_Shift'] = state.home_players_on['Curr_Shift'].add(u) # for every row in the column
+    	state.away_players_on['Curr_Shift'] = state.away_players_on['Curr_Shift'].add(u) # for every row in the column
         return True  
     
 def update_time(state):
@@ -173,11 +178,11 @@ def update_time(state):
 def update_fapm(state):
     
     #discuss
-    state.home_team.loc[state.home_team.NAME.isin(state.home_players_on.NAME), 'FAPM'] -= 0.005
-    state.away_team.loc[state.away_team.NAME.isin(state.away_players_on.NAME), 'FAPM'] -= 0.005   
+    state.home_team.loc[state.home_team.NAME.isin(state.home_players_on.NAME), 'FAPM'] -= (state.home_players_on['Minutes in Game']+state.home_players_on['Curr_Shift'])
+    state.away_team.loc[state.away_team.NAME.isin(state.away_players_on.NAME), 'FAPM'] -= (state.away_players_on['Minutes in Game']+state.away_players_on['Curr_Shift'])
     
-    state.home_team.loc[~state.home_team.NAME.isin(state.home_players_on.NAME), 'FAPM'] += 0.005
-    state.away_team.loc[~state.away_team.NAME.isin(state.away_players_on.NAME), 'FAPM'] += 0.005
+    state.home_team.loc[~state.home_team.NAME.isin(state.home_players_on.NAME), 'FAPM'] += 0
+    state.away_team.loc[~state.away_team.NAME.isin(state.away_players_on.NAME), 'FAPM'] += 0
 
 
 parser = argparse.ArgumentParser(description='AINBA')
@@ -201,6 +206,7 @@ def main():
     home['RPM'] = temp['RPM'] 
     home['Minutes in Game'] = 0
     home['FAPM'] = temp['RPM']
+    home['Curr_Shift'] = 0 
 
     state.home_team = []
     state.home_team.append(home)
@@ -215,6 +221,7 @@ def main():
     away['RPM'] = temp['RPM'] 
     away['Minutes in Game'] = 0
     away['FAPM'] = temp['RPM']
+    away['Curr_Shift'] = 0
 
     state.away_team = []
     state.away_team.append(away)
