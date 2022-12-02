@@ -132,8 +132,7 @@ def substitution(team, state):
             
             if len(poc-cp) != 0:
                 for i in range(len(poc-cp)):
-                    temp = 0
-                    #print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i] + " at " + str(state.time_in_qtr) + " in quarter " + str(state.quarter))
+                    print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i] + " at " + str(state.time_in_qtr) + " in quarter " + str(state.quarter))
 
 
     elif team == "Away":
@@ -149,8 +148,7 @@ def substitution(team, state):
             
             if len(poc-cp) != 0:
                 for i in range(len(poc-cp)):
-                    temp = 0
-                    #print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i] + " at " + str(state.time_in_qtr) + " in quarter " + str(state.quarter))
+                    print(list(poc-cp)[i] + " is substituted by " + list(cp-poc)[i] + " at " + str(state.time_in_qtr) + " in quarter " + str(state.quarter))
             
 def simulate_time(state, home_avg, away_avg):
     sd = 3/60
