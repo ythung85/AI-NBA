@@ -31,9 +31,9 @@ def consider_timeout(team, state):
                         # away team has momentum
                         u = np.random.uniform()
                         if u > probability_of_calling_timeout:
-			    state.home_players_on['Curr_Shift'] = 0
-    			    state.away_players_on['Curr_Shift'] = 0
-                            return True
+				state.home_players_on['Curr_Shift'] = 0
+    				state.away_players_on['Curr_Shift'] = 0
+                        	return True
     elif team == "Away":
         if state.away_timeouts_left > 0:
             if state.momentum > 5:
