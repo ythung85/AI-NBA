@@ -52,7 +52,9 @@ def simulate_points(state):
     
     home_fapm = sum(state.home_team[state.home_team.NAME.isin(state.home_players_on.NAME)]['FAPM'])
     away_fapm = sum(state.away_team[state.away_team.NAME.isin(state.away_players_on.NAME)]['FAPM'])
-    
+    home_fapm = sign(home_fapm)*sqrt(abs(home_fapm))
+    away_fapm = sign(away_fapm)*sqrt(abs(away_fapm))
+
     '''
     
     try to find you the best setting for value of "u > 0.50 + home_fapm - away_fapm"
@@ -61,17 +63,17 @@ def simulate_points(state):
     if(state.possession_of_ball == "Home"):
         u = np.random.uniform()
         #print('Home team Turns')
-        if(u >  0.7 - (away_fapm - home_fapm)/away_fapm):
+        if(u >  0.14 - (home_fapm - home_fapm)/home_fapm):
           # 0 points - turnover
             #print('donothing')
             donothing()
         else:
             #print('try to shoot the ball')
             u = np.random.uniform()
-            if(u < 2/5):
+            if(u < (0.47/0.86)):
                 state.home_score += 2
                 #print('2 points get.')
-            elif(2/5 < u < 0.1+(2/5)):
+            elif((0.47/0.86) < u < (0.47/0.86)+(0.59/0.86)):
                 state.home_score += 3
                 #print('3 points get.')
             else:
@@ -83,17 +85,17 @@ def simulate_points(state):
     elif(state.possession_of_ball == "Away"):
         u = np.random.uniform()
         #print('Away team Turns')
-        if(u > 0.7 -(away_fapm - home_fapm)/away_fapm):
+        if(u > 0.14 -(away_fapm - home_fapm)/away_fapm):
             # 0 points - turnover
             #print('donothing')
             donothing()
         else:
             u = np.random.uniform()
             #print('try to shoot the ball')
-            if(u < 2/5):
+            if(u < (0.47/0.86)):
                 state.away_score += 2
                 #print('2 points get.')
-            elif(2/5 < u < 0.1+(2/5)):
+            elif((0.47/0.86) < u < (0.47/0.86)+(0.59/0.86)):
                 state.away_score += 3
                 #print('3 points get.')
             else:
@@ -142,10 +144,9 @@ def simulate_time(state, home_avg, away_avg):
         # for all players on court, update minutes played
     state.home_players_on['Minutes in Game'] = 0
     state.away_players_on['Minutes in Game'] = 0
-    
-    state.home_players_on['Minutes in Game'] = state.home_players_on['Minutes in Game'].add(u) # for every row in the column
-    state.away_players_on['Minutes in Game'] = state.away_players_on['Minutes in Game'].add(u) # for every row in the column
     if(state.time_in_qtr - u < 0):
+	state.home_players_on['Minutes in Game'] = state.home_players_on['Minutes in Game'].add(state.time_in_qtr) # for every row in the column
+    	state.away_players_on['Minutes in Game'] = state.away_players_on['Minutes in Game'].add(state.time_in_qtr) # for every row in the column
         state.quarter += 1
         state.time_in_qtr = 12.00
         if(state.first_poss == "Home"):
@@ -161,6 +162,8 @@ def simulate_time(state, home_avg, away_avg):
         return False # false means do not simulate points
     else:
         state.time_in_qtr -= u
+	state.home_players_on['Minutes in Game'] = state.home_players_on['Minutes in Game'].add(u) # for every row in the column
+    	state.away_players_on['Minutes in Game'] = state.away_players_on['Minutes in Game'].add(u) # for every row in the column
         return True  
     
 def update_time(state):
