@@ -1,7 +1,9 @@
 # AI-NBA
 
 Input format:
-python3 agent.py -Laker -Warrior
+```
+python3 ckn.py -ATL -BOS
+```
 
 *Provide a input name for each team:*
 \table
