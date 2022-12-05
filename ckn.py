@@ -3,7 +3,6 @@ import pandas as pd
 import sys
 import argparse
 import os
-os.chdir('/Users/thf/Library/CloudStorage/OneDrive-purdue.edu/Purdue/2022fall/CS 571')
 
 
 class State():
