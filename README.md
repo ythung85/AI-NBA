@@ -2,7 +2,7 @@
 
 Input format:
 ```
-python3 ckn.py --home_team GSW --away_team ORL --strategy_home AI -- strategy_away BL
+python3 ckn.py --home_team GSW --away_team ORL --strategy_home AI --strategy_away BL
 ```
 
 All team abbreviations should be 3 letters, consistent with NBA standard
