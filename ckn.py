@@ -355,11 +355,11 @@ def main():
             if nba.strategy_home == 'AI':
                 substitution("Home", state)
 
-            elif nba.strategy_away == 'AI':
-                substitution("Away", state)
-
             elif nba.strategy_home == 'BL':
                 substitution_baseline("Home", state)
+
+            if nba.strategy_away == 'AI':
+                substitution("Away", state)
 
             elif nba.strategy_away == 'BL':
                 substitution_baseline("Away", state)
